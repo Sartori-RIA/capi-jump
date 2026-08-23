@@ -11,5 +11,5 @@ export default function Game() {
     return () => game.destroy()
   }, [])
 
-  return <canvas ref={canvasRef} aria-label="Capivara Zen" />
+  return <canvas ref={canvasRef} aria-label="Capi Jump" />
 }

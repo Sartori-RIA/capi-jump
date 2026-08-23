@@ -1,8 +1,8 @@
-# Capivara Zen
+# Capi Jump
 
 Protótipo de pulo no rio (React + Canvas). A capivara **flutua na água**; obstáculo é jacaré na superfície e anaconda. Algas são só cenário. Game over: *foi de arrasta.*
 
-Nome temporário. Pasta: `capivara-demo`.
+Pasta local: `capivara-demo`. Repositório: `capi-jump`.
 
 ```bash
 npm install

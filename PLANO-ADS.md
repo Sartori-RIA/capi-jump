@@ -2,7 +2,7 @@
 
 O jogo continua **grátis para jogar**. Anúncio só entra quando existir gente jogando. Não ligue AdSense no `localhost` nem no primeiro deploy vazio.
 
-Nome ainda é temporário (**Capivara Zen**). O plano de ads não depende do título.
+Nome do jogo: **Capi Jump**. O plano de ads não depende do título.
 
 ## O que não fazer
 

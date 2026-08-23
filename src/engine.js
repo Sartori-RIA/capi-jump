@@ -254,7 +254,7 @@ export class CapivaraGame {
     ctx.fillText(String(score), w / 2, 118)
 
     if (state === "ready") {
-      this.banner("Capivara Zen", "toque · espaço · ↑   desvia de jacaré e cobra")
+      this.banner("Capi Jump", "toque · espaço · ↑   desvia de jacaré e cobra")
     }
     if (state === "dead") {
       this.banner("foi de arrasta.", `score ${score}   recorde ${best}   toque para tentar`)
