@@ -11,4 +11,6 @@ npm run dev
 
 Abre em `http://127.0.0.1:5173/`. Toque, clique, espaço ou ↑ para pular. Recorde no `localStorage`.
 
+Depois do deploy na Vercel, o jogo instala como app (PWA) no celular.
+
 Ads: ainda não. Quando houver tráfego, ver [PLANO-ADS.md](PLANO-ADS.md).
