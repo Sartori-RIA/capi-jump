@@ -140,6 +140,7 @@ export class CapivaraGame {
       gapH,
       scored: false,
       kind,
+      phase: Math.random() * Math.PI * 2,
     })
     this.spawnX += 250 + Math.random() * 90
   }
@@ -191,10 +192,10 @@ export class CapivaraGame {
     for (const ob of this.obstacles) {
       if (ob.kind === "gator") {
         const gator = {
-          x: ob.x - 8,
-          y: this.waterY - 8,
-          w: ob.w + 40,
-          h: 36,
+          x: ob.x - 66,
+          y: this.waterY - 10,
+          w: ob.w + 90,
+          h: 38,
         }
         if (overlaps(box, gator)) {
           this.die()
@@ -357,47 +358,104 @@ export class CapivaraGame {
 
   drawGator(ob) {
     const { ctx, waterY, t } = this
-    const y = waterY - 4 + Math.sin(t / 18 + ob.x) * 2
+    const y = waterY - 8 + Math.sin(t / 32 + (ob.phase || 0)) * 1.2
     const x = ob.x - 10
-    const bodyW = ob.w + 36
+    const len = ob.w + 36
+
+    ctx.save()
+    ctx.translate(x, y)
+
+    ctx.fillStyle = "#2f5728"
+    ctx.beginPath()
+    ctx.moveTo(len - 18, 16)
+    ctx.lineTo(len + 22, 6)
+    ctx.lineTo(len + 34, 14)
+    ctx.lineTo(len + 18, 18)
+    ctx.lineTo(len + 30, 26)
+    ctx.lineTo(len - 14, 24)
+    ctx.closePath()
+    ctx.fill()
+    ctx.fillStyle = "#2a4d24"
+    for (let i = 0; i < 3; i += 1) {
+      ctx.beginPath()
+      ctx.moveTo(len - 4 + i * 10, 14)
+      ctx.lineTo(len + 2 + i * 10, 6)
+      ctx.lineTo(len + 8 + i * 10, 14)
+      ctx.fill()
+    }
+
     ctx.fillStyle = "#3c6b32"
     ctx.beginPath()
-    ctx.ellipse(x + bodyW * 0.42, y + 16, bodyW * 0.42, 16, 0, 0, Math.PI * 2)
+    ctx.roundRect(8, 10, len - 22, 22, 11)
     ctx.fill()
 
-    ctx.fillStyle = "#4a7d3c"
+    ctx.fillStyle = "#6b8f3a"
     ctx.beginPath()
-    ctx.ellipse(x + bodyW - 18, y + 12, 22, 12, 0.1, 0, Math.PI * 2)
+    ctx.roundRect(22, 24, len - 52, 8, 4)
     ctx.fill()
 
     ctx.fillStyle = "#2a4d24"
     for (let i = 0; i < 5; i += 1) {
       ctx.beginPath()
-      ctx.moveTo(x + 24 + i * 14, y + 4)
-      ctx.lineTo(x + 30 + i * 14, y - 8)
-      ctx.lineTo(x + 36 + i * 14, y + 4)
+      ctx.moveTo(24 + i * 14, 12)
+      ctx.lineTo(30 + i * 14, 1)
+      ctx.lineTo(36 + i * 14, 12)
       ctx.fill()
     }
 
-    ctx.fillStyle = "#c7d36a"
+    ctx.fillStyle = "#4a7d3c"
     ctx.beginPath()
-    ctx.moveTo(x + bodyW - 2, y + 10)
-    ctx.lineTo(x + bodyW + 18, y + 14)
-    ctx.lineTo(x + bodyW - 4, y + 20)
+    ctx.roundRect(-4, 6, 28, 22, 8)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.moveTo(6, 13)
+    ctx.lineTo(-46, 13)
+    ctx.quadraticCurveTo(-56, 13, -56, 18)
+    ctx.lineTo(-50, 22)
+    ctx.lineTo(6, 22)
     ctx.closePath()
     ctx.fill()
 
-    ctx.fillStyle = "#1a120c"
+    ctx.fillStyle = "#355c2c"
     ctx.beginPath()
-    ctx.arc(x + bodyW - 12, y + 8, 2.4, 0, Math.PI * 2)
+    ctx.moveTo(4, 21)
+    ctx.lineTo(-42, 21)
+    ctx.quadraticCurveTo(-48, 21, -48, 24)
+    ctx.lineTo(-42, 27)
+    ctx.lineTo(4, 27)
+    ctx.closePath()
     ctx.fill()
 
-    ctx.strokeStyle = "#2a4d24"
-    ctx.lineWidth = 4
+    ctx.fillStyle = "#f0ead8"
+    for (let i = 0; i < 4; i += 1) {
+      const tx = -38 + i * 10
+      ctx.beginPath()
+      ctx.moveTo(tx, 22)
+      ctx.lineTo(tx + 3, 28)
+      ctx.lineTo(tx + 6, 22)
+      ctx.fill()
+    }
+
+    ctx.fillStyle = "#1a120c"
     ctx.beginPath()
-    ctx.moveTo(x + 8, y + 18)
-    ctx.quadraticCurveTo(x - 8, y + 36, x + 18, y + 22)
-    ctx.stroke()
+    ctx.arc(-46, 16, 1.6, 0, Math.PI * 2)
+    ctx.arc(-40, 16, 1.6, 0, Math.PI * 2)
+    ctx.fill()
+
+    ctx.fillStyle = "#2a4d24"
+    ctx.beginPath()
+    ctx.ellipse(10, 5, 7, 6, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = "#1a120c"
+    ctx.beginPath()
+    ctx.arc(10, 4, 2.6, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = "#e8f08a"
+    ctx.beginPath()
+    ctx.arc(11, 3.2, 1.1, 0, Math.PI * 2)
+    ctx.fill()
+
+    ctx.restore()
   }
 
   drawAnacondaTop(ob) {
