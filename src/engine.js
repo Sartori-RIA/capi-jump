@@ -1,9 +1,13 @@
 const STORAGE_KEY = "capivara-zen-best"
-const GRAVITY = 0.32
-const FLAP = -7.2
-const MAX_FALL = 9
-const BUOYANCY = 0.55
-const SCROLL_BASE = 2.6
+const FRAME = 1000 / 60
+const GRAVITY = 0.38
+const FLAP = -9.4
+const MAX_FALL = 10
+const BUOYANCY = 0.42
+const SCROLL_BASE = 7.8
+const SPEED_EVERY = 10
+const SPEED_BUMP = 0.45
+const SPEED_BUMPS_MAX = 8
 
 function bestScore() {
   return Number(localStorage.getItem(STORAGE_KEY) || 0)
@@ -42,6 +46,7 @@ export class CapivaraGame {
     this.t = 0
     this.running = false
     this.raf = 0
+    this.last = 0
     this.obstacles = []
     this.weeds = []
     this.spawnX = 0
@@ -66,6 +71,7 @@ export class CapivaraGame {
     window.addEventListener("keydown", this.onKey)
     this.reset("ready")
     this.running = true
+    this.last = performance.now()
     this.loop()
   }
 
@@ -130,8 +136,9 @@ export class CapivaraGame {
 
   spawnObstacle() {
     const kind = pickKind()
-    const gapY = 64 + Math.random() * 88
-    const gapH = Math.max(150, this.waterY - gapY)
+    const air = Math.max(120, this.waterY - 40)
+    const gapY = 70 + Math.random() * (air * 0.58)
+    const gapH = Math.max(110, this.waterY - gapY)
     const width = kind === "gator" ? 92 : 68
     this.obstacles.push({
       x: this.spawnX,
@@ -146,18 +153,19 @@ export class CapivaraGame {
   }
 
   speed() {
-    return SCROLL_BASE + Math.min(2.2, this.score * 0.12)
+    const bumps = Math.min(SPEED_BUMPS_MAX, Math.floor(this.score / SPEED_EVERY))
+    return SCROLL_BASE + bumps * SPEED_BUMP
   }
 
-  tick() {
-    this.t += 1
+  tick(steps) {
+    this.t += steps
     if (this.state !== "playing") return
 
-    this.capi.vy = Math.min(MAX_FALL, this.capi.vy + GRAVITY)
+    this.capi.vy = Math.min(MAX_FALL, this.capi.vy + GRAVITY * steps)
     if (this.capi.y > this.waterY) {
-      this.capi.vy -= BUOYANCY
+      this.capi.vy -= BUOYANCY * steps
     }
-    this.capi.y += this.capi.vy
+    this.capi.y += this.capi.vy * steps
 
     if (this.capi.y < 28) {
       this.die()
@@ -168,7 +176,7 @@ export class CapivaraGame {
       return
     }
 
-    const dx = this.speed()
+    const dx = this.speed() * steps
     this.spawnX -= dx
     for (const ob of this.obstacles) {
       ob.x -= dx
@@ -223,9 +231,11 @@ export class CapivaraGame {
     this.best = saveBest(this.score)
   }
 
-  loop = () => {
+  loop = (now = performance.now()) => {
     if (!this.running) return
-    this.tick()
+    const dt = Math.min(48, now - this.last)
+    this.last = now
+    this.tick(dt / FRAME)
     this.draw()
     this.raf = requestAnimationFrame(this.loop)
   }
