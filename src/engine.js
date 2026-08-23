@@ -254,11 +254,27 @@ export class CapivaraGame {
     ctx.fillText(String(score), w / 2, 118)
 
     if (state === "ready") {
-      this.banner("Capi Jump", "toque · espaço · ↑   desvia de jacaré e cobra")
+      this.banner("Capi Jump", this.readyHint())
     }
     if (state === "dead") {
-      this.banner("foi de arrasta.", `score ${score}   recorde ${best}   toque para tentar`)
+      this.banner("foi de arrasta.", this.deadHint(score, best))
     }
+  }
+
+  usesTouch() {
+    return this.w < 720 || window.matchMedia("(pointer: coarse)").matches
+  }
+
+  readyHint() {
+    if (this.usesTouch()) {
+      return ["toque na tela para pular", "desvia de jacaré e cobra"]
+    }
+    return ["toque · espaço · ↑ para pular", "desvia de jacaré e cobra"]
+  }
+
+  deadHint(score, best) {
+    const retry = this.usesTouch() ? "toque na tela para tentar" : "toque para tentar"
+    return [`score ${score}   recorde ${best}`, retry]
   }
 
   drawSun() {
@@ -510,22 +526,25 @@ export class CapivaraGame {
     ctx.restore()
   }
 
-  banner(title, subtitle) {
+  banner(title, lines) {
     const { ctx, w, h } = this
+    const subtitles = Array.isArray(lines) ? lines : [lines]
     ctx.fillStyle = "rgba(12, 28, 26, 0.72)"
     const boxW = Math.min(w - 32, 420)
-    const boxH = 118
+    const boxH = 92 + subtitles.length * 26
     const x = (w - boxW) / 2
-    const y = h * 0.34
+    const y = h * 0.32
     ctx.beginPath()
     ctx.roundRect(x, y, boxW, boxH, 18)
     ctx.fill()
     ctx.fillStyle = "#f6ead4"
     ctx.font = "700 28px Trebuchet MS, sans-serif"
     ctx.textAlign = "center"
-    ctx.fillText(title, w / 2, y + 48)
+    ctx.fillText(title, w / 2, y + 44)
     ctx.fillStyle = "#c9e6df"
     ctx.font = "16px Trebuchet MS, sans-serif"
-    ctx.fillText(subtitle, w / 2, y + 82)
+    subtitles.forEach((line, i) => {
+      ctx.fillText(line, w / 2, y + 72 + i * 24)
+    })
   }
 }
