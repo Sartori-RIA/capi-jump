@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://capi-jump-omega.vercel.app/sitemap.xml

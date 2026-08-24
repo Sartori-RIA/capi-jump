@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'robots.txt', 'sitemap.xml'],
       manifest: {
         name: 'Capi Jump',
         short_name: 'Capi Jump',
@@ -39,6 +39,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        navigateFallbackDenylist: [/robots\.txt$/, /sitemap\.xml$/],
         clientsClaim: true,
         skipWaiting: true,
       },
