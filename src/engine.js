@@ -1,3 +1,5 @@
+import { GameAudio } from "./audio"
+
 const STORAGE_KEY = "capivara-zen-best"
 const FRAME = 1000 / 60
 const GRAVITY = 0.38
@@ -51,16 +53,31 @@ export class CapivaraGame {
     this.weeds = []
     this.spawnX = 0
     this.capi = { x: 0, y: 0, vy: 0 }
+    this.audio = new GameAudio()
     this.onResize = () => this.resize()
     this.onPointer = (event) => {
       event.preventDefault()
+      const pos = this.pointerPos(event)
+      if (this.hitMute(pos.x, pos.y)) {
+        this.audio.toggleMute()
+        return
+      }
       this.flap()
     }
     this.onKey = (event) => {
+      if (event.code === "KeyM") {
+        event.preventDefault()
+        this.audio.toggleMute()
+        return
+      }
       if (event.code === "Space" || event.code === "ArrowUp") {
         event.preventDefault()
         this.flap()
       }
+    }
+    this.onVisibility = () => {
+      if (document.hidden) this.audio.suspend()
+      else this.audio.resume()
     }
   }
 
@@ -69,6 +86,7 @@ export class CapivaraGame {
     window.addEventListener("resize", this.onResize)
     this.canvas.addEventListener("pointerdown", this.onPointer)
     window.addEventListener("keydown", this.onKey)
+    document.addEventListener("visibilitychange", this.onVisibility)
     this.reset("ready")
     this.running = true
     this.last = performance.now()
@@ -81,6 +99,8 @@ export class CapivaraGame {
     window.removeEventListener("resize", this.onResize)
     this.canvas.removeEventListener("pointerdown", this.onPointer)
     window.removeEventListener("keydown", this.onKey)
+    document.removeEventListener("visibilitychange", this.onVisibility)
+    this.audio.destroy()
   }
 
   resize() {
@@ -105,6 +125,7 @@ export class CapivaraGame {
     this.spawnX = this.w + 40
     this.spawnObstacle()
     this.spawnObstacle()
+    if (state === "playing") this.audio.duck(1)
   }
 
   seedWeeds() {
@@ -121,17 +142,23 @@ export class CapivaraGame {
   }
 
   flap() {
+    this.audio.unlock()
     if (this.state === "ready") {
       this.state = "playing"
       this.capi.vy = FLAP
+      this.audio.startBgm()
+      this.audio.jump()
       return
     }
     if (this.state === "dead") {
       this.reset("playing")
       this.capi.vy = FLAP
+      this.audio.startBgm()
+      this.audio.jump()
       return
     }
     this.capi.vy = FLAP
+    this.audio.jump()
   }
 
   spawnObstacle() {
@@ -183,6 +210,7 @@ export class CapivaraGame {
       if (!ob.scored && ob.x + ob.w < this.capi.x - 18) {
         ob.scored = true
         this.score += 1
+        if (this.score % 10 === 0) this.audio.plim()
       }
     }
     this.obstacles = this.obstacles.filter((ob) => ob.x + ob.w > -80)
@@ -229,6 +257,8 @@ export class CapivaraGame {
   die() {
     this.state = "dead"
     this.best = saveBest(this.score)
+    this.audio.hit()
+    this.audio.duck(0.22)
   }
 
   loop = (now = performance.now()) => {
@@ -236,6 +266,7 @@ export class CapivaraGame {
     const dt = Math.min(48, now - this.last)
     this.last = now
     this.tick(dt / FRAME)
+    this.audio.fillMelody()
     this.draw()
     this.raf = requestAnimationFrame(this.loop)
   }
@@ -270,6 +301,66 @@ export class CapivaraGame {
     if (state === "dead") {
       this.banner("foi de arrasta.", this.deadHint(score, best))
     }
+    this.drawMute()
+  }
+
+  pointerPos(event) {
+    const rect = this.canvas.getBoundingClientRect()
+    return {
+      x: ((event.clientX - rect.left) / rect.width) * this.w,
+      y: ((event.clientY - rect.top) / rect.height) * this.h,
+    }
+  }
+
+  muteBox() {
+    const size = 40
+    return { x: this.w - 56, y: 16, w: size, h: size }
+  }
+
+  hitMute(x, y) {
+    const b = this.muteBox()
+    return x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h
+  }
+
+  drawMute() {
+    const { ctx } = this
+    const b = this.muteBox()
+    ctx.fillStyle = "rgba(12, 28, 26, 0.55)"
+    ctx.beginPath()
+    ctx.roundRect(b.x, b.y, b.w, b.h, 10)
+    ctx.fill()
+
+    const cx = b.x + 15
+    const cy = b.y + b.h / 2
+    ctx.fillStyle = "#f6ead4"
+    ctx.beginPath()
+    ctx.moveTo(cx + 6, cy - 7)
+    ctx.lineTo(cx + 6, cy + 7)
+    ctx.lineTo(cx - 2, cy + 4)
+    ctx.lineTo(cx - 8, cy + 4)
+    ctx.lineTo(cx - 8, cy - 4)
+    ctx.lineTo(cx - 2, cy - 4)
+    ctx.closePath()
+    ctx.fill()
+
+    ctx.strokeStyle = "#f6ead4"
+    ctx.lineWidth = 2
+    ctx.lineCap = "round"
+    if (this.audio.muted) {
+      ctx.beginPath()
+      ctx.moveTo(cx + 10, cy - 6)
+      ctx.lineTo(cx + 18, cy + 6)
+      ctx.moveTo(cx + 18, cy - 6)
+      ctx.lineTo(cx + 10, cy + 6)
+      ctx.stroke()
+      return
+    }
+    ctx.beginPath()
+    ctx.arc(cx + 6, cy, 6, -0.6, 0.6)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.arc(cx + 6, cy, 11, -0.55, 0.55)
+    ctx.stroke()
   }
 
   usesTouch() {
