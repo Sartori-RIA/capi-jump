@@ -82,10 +82,12 @@ export class CapivaraGame {
       if (document.hidden) this.audio.suspend()
       else this.audio.resume()
     }
+    this.ro = new ResizeObserver(() => this.resize())
   }
 
   start() {
     this.resize()
+    this.ro.observe(this.canvas)
     window.addEventListener("resize", this.onResize)
     this.canvas.addEventListener("pointerdown", this.onPointer)
     window.addEventListener("keydown", this.onKey)
@@ -99,6 +101,7 @@ export class CapivaraGame {
   destroy() {
     this.running = false
     cancelAnimationFrame(this.raf)
+    this.ro.disconnect()
     window.removeEventListener("resize", this.onResize)
     this.canvas.removeEventListener("pointerdown", this.onPointer)
     window.removeEventListener("keydown", this.onKey)
@@ -107,15 +110,21 @@ export class CapivaraGame {
   }
 
   resize() {
+    const box = this.canvas.getBoundingClientRect()
+    const w = Math.max(1, Math.round(box.width))
+    const h = Math.max(1, Math.round(box.height))
+    if (w === this.w && h === this.h && this.canvas.width) return
+
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    this.w = Math.max(320, this.canvas.clientWidth)
-    this.h = Math.max(480, this.canvas.clientHeight)
+    this.w = w
+    this.h = h
     this.canvas.width = Math.floor(this.w * dpr)
     this.canvas.height = Math.floor(this.h * dpr)
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     this.waterY = this.h * 0.7
     this.capi.x = this.w * 0.28
     this.seedStars()
+    if (this.state === "ready") this.reset("ready")
   }
 
   seedStars() {
@@ -140,15 +149,15 @@ export class CapivaraGame {
     this.capi.vy = 0
     this.obstacles = []
     this.weeds = this.seedWeeds()
-    this.spawnX = this.w + 40
-    this.spawnObstacle()
-    this.spawnObstacle()
+    this.spawnX = this.capi.x + 260
+    this.fillObstacles()
     if (state === "playing") this.audio.duck(1)
   }
 
   seedWeeds() {
     const weeds = []
-    for (let i = 0; i < 4; i += 1) {
+    const count = Math.max(4, Math.round(this.w / 180))
+    for (let i = 0; i < count; i += 1) {
       weeds.push({
         x: 40 + Math.random() * this.w,
         h: 28 + Math.random() * 46,
@@ -197,6 +206,10 @@ export class CapivaraGame {
     this.spawnX += 250 + Math.random() * 90
   }
 
+  fillObstacles() {
+    while (this.spawnX < this.w + 80) this.spawnObstacle()
+  }
+
   speed() {
     const bumps = Math.min(SPEED_BUMPS_MAX, Math.floor(this.score / SPEED_EVERY))
     return SCROLL_BASE + bumps * SPEED_BUMP
@@ -232,7 +245,7 @@ export class CapivaraGame {
       }
     }
     this.obstacles = this.obstacles.filter((ob) => ob.x + ob.w > -80)
-    if (this.obstacles.length < 3) this.spawnObstacle()
+    this.fillObstacles()
 
     for (const weed of this.weeds) {
       weed.x -= dx * 0.55
