@@ -1,4 +1,5 @@
 import { GameAudio } from "./audio"
+import { copy, isNight } from "./locale"
 
 const STORAGE_KEY = "capivara-zen-best"
 const FRAME = 1000 / 60
@@ -53,6 +54,8 @@ export class CapivaraGame {
     this.weeds = []
     this.spawnX = 0
     this.capi = { x: 0, y: 0, vy: 0 }
+    this.stars = []
+    this.copy = copy()
     this.audio = new GameAudio()
     this.onResize = () => this.resize()
     this.onPointer = (event) => {
@@ -112,6 +115,21 @@ export class CapivaraGame {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     this.waterY = this.h * 0.7
     this.capi.x = this.w * 0.28
+    this.seedStars()
+  }
+
+  seedStars() {
+    const stars = []
+    const count = Math.max(28, Math.floor(this.w / 16))
+    for (let i = 0; i < count; i += 1) {
+      stars.push({
+        x: Math.random() * this.w,
+        y: 36 + Math.random() * (this.waterY * 0.48),
+        r: 0.5 + Math.random() * 1.3,
+        phase: Math.random() * Math.PI * 2,
+      })
+    }
+    this.stars = stars
   }
 
   reset(state = "playing") {
@@ -273,33 +291,42 @@ export class CapivaraGame {
 
   draw() {
     const { ctx, w, h, waterY, t, capi, score, best, state } = this
+    const night = isNight()
     const sky = ctx.createLinearGradient(0, 0, 0, h)
-    sky.addColorStop(0, "#f3c98a")
-    sky.addColorStop(0.42, "#8ec4a8")
-    sky.addColorStop(1, "#1c4d4a")
+    if (night) {
+      sky.addColorStop(0, "#0b1730")
+      sky.addColorStop(0.42, "#16324a")
+      sky.addColorStop(1, "#0f2f32")
+    } else {
+      sky.addColorStop(0, "#f3c98a")
+      sky.addColorStop(0.42, "#8ec4a8")
+      sky.addColorStop(1, "#1c4d4a")
+    }
     ctx.fillStyle = sky
     ctx.fillRect(0, 0, w, h)
 
-    this.drawSun()
-    this.drawCanopy()
+    if (night) this.drawStars()
+    if (night) this.drawMoon()
+    else this.drawSun()
+    this.drawCanopy(night)
 
     for (const ob of this.obstacles) this.drawObstacleTop(ob)
 
-    this.drawWater(waterY, t)
+    this.drawWater(waterY, t, night)
     this.drawWeeds()
     for (const ob of this.obstacles) this.drawObstacleBottom(ob)
     this.drawCapybara(capi, t)
 
-    ctx.fillStyle = "rgba(20, 24, 18, 0.78)"
+    ctx.fillStyle = night ? "rgba(246, 234, 212, 0.88)" : "rgba(20, 24, 18, 0.78)"
     ctx.font = `700 ${Math.max(28, Math.floor(w / 14))}px Trebuchet MS, sans-serif`
     ctx.textAlign = "center"
     ctx.fillText(String(score), w / 2, 118)
 
     if (state === "ready") {
-      this.banner("Capi Jump", this.readyHint())
+      this.banner(this.copy.title, this.readyHint())
     }
     if (state === "dead") {
-      this.banner("foi de arrasta.", this.deadHint(score, best))
+      this.banner(this.copy.dead, this.deadHint(score, best))
     }
     this.drawMute()
   }
@@ -368,15 +395,28 @@ export class CapivaraGame {
   }
 
   readyHint() {
+    const { copy } = this
     if (this.usesTouch()) {
-      return ["toque na tela para pular", "desvia de jacaré e cobra"]
+      return [copy.tapJump, copy.dodge]
     }
-    return ["toque · espaço · ↑ para pular", "desvia de jacaré e cobra"]
+    return [copy.keyJump, copy.dodge]
   }
 
   deadHint(score, best) {
-    const retry = this.usesTouch() ? "toque na tela para tentar" : "toque para tentar"
-    return [`score ${score}   recorde ${best}`, retry]
+    const retry = this.usesTouch() ? this.copy.tapRetry : this.copy.retry
+    return [this.copy.scoreLine(score, best), retry]
+  }
+
+  drawStars() {
+    const { ctx, t } = this
+    for (const star of this.stars) {
+      ctx.globalAlpha = 0.4 + Math.sin(t / 16 + star.phase) * 0.35
+      ctx.fillStyle = "#f4f1de"
+      ctx.beginPath()
+      ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    ctx.globalAlpha = 1
   }
 
   drawSun() {
@@ -387,9 +427,23 @@ export class CapivaraGame {
     ctx.fill()
   }
 
-  drawCanopy() {
+  drawMoon() {
     const { ctx, w } = this
-    ctx.fillStyle = "#245c3a"
+    const x = w * 0.82
+    const y = 90
+    ctx.fillStyle = "#e8e4d0"
+    ctx.beginPath()
+    ctx.arc(x, y, 26, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.fillStyle = "#0b1730"
+    ctx.beginPath()
+    ctx.arc(x + 9, y - 5, 24, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  drawCanopy(night = false) {
+    const { ctx, w } = this
+    ctx.fillStyle = night ? "#163528" : "#245c3a"
     ctx.beginPath()
     ctx.moveTo(0, 0)
     for (let x = 0; x <= w; x += 22) {
@@ -419,12 +473,18 @@ export class CapivaraGame {
     ctx.globalAlpha = 1
   }
 
-  drawWater(waterY, t) {
+  drawWater(waterY, t, night = false) {
     const { ctx, w, h } = this
     const water = ctx.createLinearGradient(0, waterY, 0, h)
-    water.addColorStop(0, "rgba(46, 120, 118, 0.55)")
-    water.addColorStop(0.35, "rgba(22, 78, 72, 0.82)")
-    water.addColorStop(1, "#0f2f32")
+    if (night) {
+      water.addColorStop(0, "rgba(18, 70, 78, 0.62)")
+      water.addColorStop(0.35, "rgba(8, 36, 42, 0.9)")
+      water.addColorStop(1, "#07181c")
+    } else {
+      water.addColorStop(0, "rgba(46, 120, 118, 0.55)")
+      water.addColorStop(0.35, "rgba(22, 78, 72, 0.82)")
+      water.addColorStop(1, "#0f2f32")
+    }
     ctx.fillStyle = water
     ctx.beginPath()
     ctx.moveTo(0, waterY)
@@ -437,7 +497,7 @@ export class CapivaraGame {
     ctx.closePath()
     ctx.fill()
 
-    ctx.strokeStyle = "rgba(200, 240, 230, 0.35)"
+    ctx.strokeStyle = night ? "rgba(160, 210, 220, 0.22)" : "rgba(200, 240, 230, 0.35)"
     ctx.lineWidth = 2
     ctx.beginPath()
     for (let x = 0; x <= w; x += 8) {
