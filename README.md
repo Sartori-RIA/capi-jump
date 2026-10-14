@@ -1,16 +1,16 @@
 # Capi Jump
 
-Protótipo de pulo no rio (React + Canvas). A capivara **flutua na água**; obstáculo é jacaré na superfície e anaconda. Algas são só cenário. Game over: *foi de arrasta.*
+River-jumping prototype (React + Canvas). The capybara **floats on the water**; obstacles are alligators on the surface and anacondas. Algae are just background scenery. Game over: *you're toast.*
 
-Pasta local: `capivara-demo`. Repositório: `capi-jump`.
+Local folder: `capivara-demo`. Repository: `capi-jump`.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abre em `http://127.0.0.1:5173/`. Toque, clique, espaço ou ↑ para pular. Recorde no `localStorage`.
+Open `http://127.0.0.1:5173/`. Tap, click, press Space, or ↑ to jump. High score saved in `localStorage`.
 
-Depois do deploy na Vercel, o jogo instala como app (PWA) no celular.
+After deployment to Vercel, the game can be installed as an app (PWA) on mobile devices.
 
-Ads: ainda não. Quando houver tráfego, ver [PLANO-ADS.md](PLANO-ADS.md).
+Ads: not yet. Once there's traffic, see [PLANO-ADS.md](PLAN-ADS.md).
