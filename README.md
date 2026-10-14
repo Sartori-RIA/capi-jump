@@ -1,5 +1,7 @@
 # Capi Jump
 
+Demo: `https://capi-jump-omega.vercel.app/`
+
 River-jumping prototype (React + Canvas). The capybara **floats on the water**; obstacles are alligators on the surface and anacondas. Algae are just background scenery. Game over: *you're toast.*
 
 Local folder: `capivara-demo`. Repository: `capi-jump`.
